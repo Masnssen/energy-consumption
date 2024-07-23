@@ -201,8 +201,7 @@ class TimeSeriesDatabase_Consumption:
                 ip = record["ip"]
                 cons = record["_value"]
                 if(ip in consumptions):
-                    if(consumptions[ip] < cons):
-                        consumptions[ip] = cons
+                    consumptions[ip] += cons
                 else:
                     consumptions[ip] = cons
         return consumptions
@@ -253,21 +252,19 @@ def testFunction():
     token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
     org = "masnssen"
     url = "http://localhost:8086"
-    ipAdresse = "20.20.20.20"
+    ipAdresse = "10.10.10.0"
     tsd = TimeSeriesDatabase_Consumption(ipAdresse, org, url, token)
     
-    st = datetime(2024, 7, 10, 8, 0).isoformat() + "Z"
-    et = datetime(2024, 7, 10, 10, 0).isoformat() + "Z"
-    dt = datetime(2024, 7, 10, 9, 20)
-    tsd.writeConsumptionData(40, dt, 10)
+    st = datetime(2024, 7, 22, 12, 0).isoformat() + "Z"
+    et = datetime(2024, 7, 22, 13, 0).isoformat() + "Z"
+    dt = datetime(2024, 7, 22, 12, 0)
+    tsd.writeConsumptionData(200000, dt, 60)
 
     consumption = tsd.manageConsumptionData(st, et)
     print(consumption)
-    results = tsd.readAllData("energy_consumptions")
-    for elms in results: 
-        for elm in elms:
-            print(elm)
+    #results = tsd.readAllData("energy_consumptions")
 
-testFunction()
+
+#testFunction()
 # writeData(client)
 # readData(client)

@@ -66,7 +66,7 @@ if response.status_code == 201:
     print("Response:", response.json())
     token = response.json().get('auth', {}).get('token')
     print(token)
-
+    url = "http://localhost:8086"
     ##Ici pour la création des deux bucket (energy_consumptions et cpu_percentages)
     createBucket("cpu_percentages", url, token, org, 365)
     createBucket("energy_consumptions", url, token, org, 365)

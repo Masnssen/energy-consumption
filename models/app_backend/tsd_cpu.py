@@ -12,13 +12,13 @@ Class: TimeSeriesDatabase_Cpu
 Initialization
     - TimeSeriesDatabase_Cpu(ipAdresse, org, url, token)
 
-Parameters:
-
-    ipAdresse (str): The IP address of the server.
-    org (str): The organization name in InfluxDB.
-    url (str): The URL of the InfluxDB instance.
-    token (str): The authentication token for InfluxDB.
-
+        Parameters:
+        
+            ipAdresse (str): The IP address of the server.
+            org (str): The organization name in InfluxDB.
+            url (str): The URL of the InfluxDB instance.
+            token (str): The authentication token for InfluxDB.
+        
 Methods
     - getTimeZone
             @classmethod
@@ -95,12 +95,11 @@ Methods
                 server_ip (str): The IP address of the server where the data was recorded.
                 vm_ip (str): The IP address of the virtual machine (VM) for which the CPU utilization was recorded.
                 vm_name (str): The name of the virtual machine.
-                cpu_percent (float): The percentage of CPU utilization.
+                cpu_percent (float): The percentage of CPU utilization, which is the most important value as it represents the CPU usage for the VM with the specified IP address, 
+                                located on the physical server with the specified IP address, measured between dateI and dateF.
                 dateI (str): The start time of the measurement period in RFC 3339 format.
                 dateF (str): The end time of the measurement period in RFC 3339 format.
-                value (float): The percentage of CPU utilization, which is the most important value as it represents the CPU usage for the VM with the specified IP address, 
-                                located on the physical server with the specified IP address, measured between dateI and dateF.
-
+    
     - readAllData
             def readAllData(self, bucket)
 
@@ -207,7 +206,7 @@ class TimeSeriesDatabase_Cpu:
             print("Error in formateCpuData")
             print("Info ", e)
             return False
-
+    
     def readCpuData(self, start_time, end_time, bucket):
         bucket = bucket
 
@@ -228,7 +227,7 @@ class TimeSeriesDatabase_Cpu:
         result = self.readCpuData(start_time, end_time, bucket)
         
         cpu_consumptions = []
-    
+        
         for table in result:
             for record in table.records:
                 element = {
@@ -238,7 +237,6 @@ class TimeSeriesDatabase_Cpu:
                     "cpu_percent" : record["_value"],
                     "dateI": record["_start"],
                     "dateF": record["_stop"],
-                    "value": record["_stop"]
                 }
                 cpu_consumptions.append(element)
 
@@ -289,34 +287,40 @@ def test_creatData():
     cpu_percentages = dict()
     vms_ip_addresses = dict()
 
-    # cpu_percentages["domain_1"] = [10, 30, 45]
-    # vms_ip_addresses["domain_1"] = "10.10.10.10"
 
-    # cpu_percentages["domain_2"] = [10, 10, 30]
-    # vms_ip_addresses["domain_2"] = "22.22.22.22"
+    cpu_percentages["VM110"] = [10]
+    vms_ip_addresses["VM110"] = "10.10.10.110"
 
-    cpu_percentages["domain_1"] = [30, 30, 30]
-    vms_ip_addresses["domain_1"] = "22.22.22.20"
+    cpu_percentages["VM111"] = [10]
+    vms_ip_addresses["VM111"] = "10.10.10.111"
+
+    cpu_percentages["VM121"] = [40]
+    vms_ip_addresses["VM121"] = "10.10.10.121"
+
+    cpu_percentages["VM133"] = [20]
+    vms_ip_addresses["VM133"] = "10.10.10.133"
+
+
     return cpu_percentages, vms_ip_addresses
 
 def testFunction():
     token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
     org = "masnssen"
     url = "http://localhost:8086"
-    ipAdresse = "20.20.20.20"
+    ipAdresse = "10.10.10.0"
     tsd = TimeSeriesDatabase_Cpu(ipAdresse, org, url, token)
 
 
-    # cpu_percentages, vms_ip_addresses = test_creatData()
-    # dt = datetime(2024, 7, 10, 8, 0)
-    # tsd.writeCpuData(cpu_percentages, vms_ip_addresses, dt, 10)
+    cpu_percentages, vms_ip_addresses = test_creatData()
+    dt = datetime(2024, 7, 22, 12, 0)
+    tsd.writeCpuData(cpu_percentages, vms_ip_addresses, dt, 60)
 
     
-    st = datetime(2024, 7, 10, 8, 0).isoformat() + "Z"
-    et = datetime(2024, 7, 10, 10, 0).isoformat() + "Z"
+    st = datetime(2024, 7, 22, 12, 0).isoformat() + "Z"
+    et = datetime(2024, 7, 22, 13, 0).isoformat() + "Z"
+    
     results = tsd.getCpuData(st, et)
     print(results)
-    
-testFunction()
+
 
 
