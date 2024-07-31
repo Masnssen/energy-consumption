@@ -29,7 +29,7 @@ Functions:
         Description: Retrieves the CPU usage statistics for all running VMs.
         Parameters: None
         Returns:
-            A dictionary where the keys are VM names and the values are dictionaries containing CPU usage statistics.
+            A dictionary where the keys are VM names and the values are CPU usage.
             Returns False if there is an error executing the command.
 
     calcul_cpu_percentage(initail_time, final_time, interval)
@@ -44,8 +44,8 @@ Functions:
     manage_cpu_percentage(dateI, dateF, interval)
         Description: Manages the CPU usage measurement process, calculating CPU usage percentages for VMs at specified intervals between two dates.
         Parameters:
-            dateI (str): Initial datetime in the format 'YYYY-MM-DD HH'.
-            dateF (str): Final datetime in the format 'YYYY-MM-DD HH'.
+            dateI (str): Initial datetime in the format 'YYYY-MM-DD HH:MM'.
+            dateF (str): Final datetime in the format 'YYYY-MM-DD HH:MM'.
             interval (int): Time interval in seconds for calculating CPU usage.
         Returns:
             A dictionary where the keys are VM names and the values are lists of CPU usage percentages over the intervals.
@@ -54,22 +54,6 @@ Functions:
             The function waits until the specified start time (dateI), then measures CPU usage at the given interval until the specified end time (dateF).
             If dateI is invalid or in the past, it defaults to the start of the next hour.
             Adjusts the interval if it is greater than the duration between dateI and dateF.
-
-Usage Example
-
-Here is an example of how to use these functions in a script:
-
-python
-
-# Run the function to manage CPU usage percentage calculation
-# manage_cpu_percentage("2024-07-15 14:31", "2024-07-15 14:33", 60)
-
-# Run the functions and print the result
-vms_ip_addresses = get_all_vms_ip_addresses()
-vms_cpu = get_all_vms_cpu_usage()
-for domain in vms_cpu:
-    if(domain in vms_ip_addresses):
-        print(vms_ip_addresses[domain])
 
 """
 
@@ -214,9 +198,9 @@ def manage_cpu_percentage(dateI, dateF, interval=10):
 # Run the function
 # manage_cpu_percentage("2024-07-15 14:31", "2024-07-15 14:33", 60)
 
-#Run the function and print the result
-vms_ip_addresses = get_all_vms_ip_addresses()
-vms_cpu = get_all_vms_cpu_usage()
-for domain in vms_cpu:
-    if(domain in vms_ip_addresses):
-        print(vms_ip_addresses[domain])
+# #Run the function and print the result
+# vms_ip_addresses = get_all_vms_ip_addresses()
+# vms_cpu = get_all_vms_cpu_usage()
+# for domain in vms_cpu:
+#     if(domain in vms_ip_addresses):
+#         print(vms_ip_addresses[domain])

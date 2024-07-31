@@ -45,7 +45,7 @@ Class: TimeSeriesDatabase_Consumption
 
     - readData
             readData(self, start_time, end_time, bucket)
-        Reads data from InfluxDB within a specified time range.
+        This function will return the amount of energy consumed by any device at a given IP address between two date-time values.
 
         Parameters:
             start_time (str): The start time for the query in RFC 3339 format (YYYY-MM-DDTHH:MM).
@@ -175,15 +175,7 @@ class TimeSeriesDatabase_Consumption:
         return result
 
     def readAllData(self, bucket):
-        """
-        Read all data from InfluxDB for a specified bucket.
-
-        Parameters:
-            bucket (str): The bucket to read data from.
-
-        Returns:
-            list: The result of the query as a list of tables.
-        """
+       
         query = f'from(bucket: "{bucket}") |> range(start: -inf)'
         
         client = influxdb_client.InfluxDBClient(url=self.url, token=self.token, org=self.org)

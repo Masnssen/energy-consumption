@@ -38,7 +38,7 @@ Functions:
 
     plug_hour_calculate_power_consumption(device, dateI, dateF, numberPeriods, nbMeasure):
         Description:
-            alculates the power consumption over a specified duration, divided into multiple periods.
+            calculate the power consumption over a specified duration, divided into multiple periods.
             
             The function supports calculating the consumption between any two datetime values and can divide the 
             total duration into segments ranging from 1 minute to a maximum of 60 minutes per period.
@@ -60,9 +60,9 @@ Functions:
                - mm: Minute as a two-digit number (e.g., 00, 30, 59)
             dateF: The end datetime for the period over which to calculate consumption.
                 Must be in the same format as dateI: 'yyyy-mm-dd hh:mm'.
-            period: The length of each period in minutes. Must be an integer between 1 and 60.
+            period: The length of each period in minutes. Must be an integer between 1 and 60 minutes.
                 This defines how the total duration between dateI and dateF is divided. For example, if period is 10, 
-                the function will calculate and return the consumption for every 10-minute interval between dateI and dateF.
+                the function will calculate and return the consumption for every 10-minutes interval between dateI and dateF.
             nbMeasure: The number of measurements to take per minute (cannot exceed 60).
 
         Returns:
@@ -84,7 +84,7 @@ from time import *
 from datetime import datetime, timedelta
 import json
 
-async def plug_connect(plug_username="tmasnssen@gmail.com", plug_password="Massi@1408", plug_ip="192.168.179.140"):
+async def plug_connect(plug_username="tmasnssen@gmail.com", plug_password="Massi@1408", plug_ip="192.168.0.3"):
     try:
         client = ApiClient(plug_username, plug_password)
         device = await client.p110(plug_ip)
@@ -117,55 +117,66 @@ async def plug_getConso(device, duration, nbMeasure):
             i += 1
         consu = measure/nbMeasure*60
         consumption += consu
-        print(consu)
+       
         d+=1
 
-    print(consumption)
+    
     return consumption
 
 async def plug_calculate_power_consumption(device, duration, numberPeriods, nbMeasure):
-    period = int(duration/numberPeriods)
+    period = duration/numberPeriods
+    overflow = period*(numberPeriods%int(numberPeriods))
     p = 0
     consumption = 0
     tabconsumtion = []
-    while p < numberPeriods:
+    while p < int(numberPeriods):
         consu = await plug_getConso(device, period, nbMeasure)
         tabconsumtion.append(consu)
         consumption += consu
 
         p += 1
     
+    consu = await plug_getConso(device, overflow, nbMeasure)
+    tabconsumtion.append(consu)
+    consumption += consu
+    
     return tabconsumtion, consumption
 
-async def plug_hour_calculate_power_consumption(device, dateI="2024-07-08 15:00", dateF="2024-07-08 16:00", period=10, nbMeasure=6):
+async def plug_hour_calculate_power_consumption(device, dateI="2024-07-23 14:10", dateF="2024-07-23 15:15", period=10, nbMeasure=6):
     actuel_dateTime = datetime.now()
     try:
         initial_dateTime = datetime.strptime(dateI, '%Y-%m-%d %H:%M')   
         final_dateTime = datetime.strptime(dateF, '%Y-%m-%d %H:%M')
-        
-        if(initial_dateTime < actuel_dateTime or initial_dateTime > final_dateTime):
+       
+        if(initial_dateTime < (actuel_dateTime-timedelta(minutes=2)) or initial_dateTime > final_dateTime):
             raise Exception("dateI > dateF")
     except:
         print("Error. By default, the initial datetime (dateI) is the start of the next hour.")
         initial_dateTime = (datetime.now() + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
         final_dateTime = (datetime.now() + timedelta(hours=2)).replace(minute=0, second=0, microsecond=0)
 
-    duration = int((final_dateTime-initial_dateTime).total_seconds()/60)
-    if(period > duration):
-        print("Error: period > duration")
-        period = int(duration/2)
-
-    tabconsumption = []
-    consumption = 0 
+    
     while(datetime.now() < initial_dateTime):
         print("***** Waiting *****")
         sleep((initial_dateTime-datetime.now()).total_seconds())
 
-    print("Start")
-    print(duration, duration/period, nbMeasure)
-    tabconsumption, consumption = await plug_calculate_power_consumption(device, duration, int(duration/period), nbMeasure)
-    
 
+    duration = int((final_dateTime-datetime.now()).total_seconds()/60)
+    if(duration == 0):
+        duration = 1
+
+    if(period > duration):
+        print("Error: period > duration")
+        period = int(duration/2)
+        if(period == 0):
+            period = 1
+
+    tabconsumption = []
+    consumption = 0 
+    print("Start")
+    nbPeriod = duration/period
+    tabconsumption, consumption = await plug_calculate_power_consumption(device, duration, nbPeriod, nbMeasure)
+    
     """
         Here we create a dictionary where each key is a datetime object, and each value is a tuple (x, y), where:
 
@@ -176,10 +187,11 @@ async def plug_hour_calculate_power_consumption(device, dateI="2024-07-08 15:00"
     """
     consumptionMeasur = dict()
     dateTime = initial_dateTime
+    
     for elm in tabconsumption:
         consumptionMeasur[dateTime.strftime("%Y-%m-%d %H:%M")] = (elm/(60*60*1000), period) 
         dateTime += timedelta(minutes=period)
-
+    
     return consumptionMeasur, consumption/(60*60*1000)
 
 
@@ -187,9 +199,19 @@ def storeDataFile(fileName, dictionary):
     with open(fileName, "w") as file:
         json.dump(dictionary, file)
 
+from tapo.requests import EnergyDataInterval
+async def test(device):
+    today = datetime.now() - timedelta(days=1)
+    print(today)
+    result = await device.get_energy_data(EnergyDataInterval.Hourly, today)
+    print(f"Device usage: {result.to_dict()}")
+
 if __name__ == "__main__":
     device = asyncio.run(plug_connect())
-    #consumption = asyncio.run(plug_getConso(device, 1, 10))
-    tabConsumption, consumption = asyncio.run(plug_hour_calculate_power_consumption(device))
-    print(tabConsumption, consumption)
-    storeDataFile("Consumption_test1.json", tabConsumption)
+#     asyncio.run(test(device))
+    
+    consumption = asyncio.run(plug_getMeasure(device))
+    print(consumption)
+#     # tabConsumption, consumption = asyncio.run(plug_hour_calculate_power_consumption(device))
+#     # print(tabConsumption, consumption)
+#     # storeDataFile("Consumption_test1.json", tabConsumption)
