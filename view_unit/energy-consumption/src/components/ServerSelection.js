@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState} from 'react';
 
 
-const ServerSelection = ({ servers, onServerSelect }) => {
+const ServerSelection = ({ servers, onServerSelect}) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedServers, setSelectedServers] = useState([]);
-
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -21,6 +20,10 @@ const ServerSelection = ({ servers, onServerSelect }) => {
   const filteredServers = servers.filter(server =>
     server.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  // useEffect(() => {
+  //   setServers(selectedServers)
+  // }, [selectedServers]);
 
   return (
     <div className="server-selection">

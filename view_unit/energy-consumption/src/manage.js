@@ -26,7 +26,7 @@ export const handleServerSelect = async (selected, servers, setSelectedServers, 
     // Récupérer les noms et IPs des serveurs sélectionnés
     const serverNames = selected.map(serverId => servers.find(server => server.id === serverId).name);
     const serverIPs = selected.map(serverId => servers.find(server => server.id === serverId).ip);
-    
+
     // Appeler l'API pour récupérer les VMs des serveurs sélectionnés
     const data = await fetchVMs(serverNames, serverIPs);
     setSelectedVMs(data);
@@ -36,15 +36,34 @@ export const handleServerSelect = async (selected, servers, setSelectedServers, 
   }
 };
 
+function convertToUTC(dateString) {
+  // Crée un objet Date à partir de la chaîne de caractères
+  const localDate = new Date(dateString);
+  
+  // Convertit la date en UTC au format ISO 8601
+  const utcDate = localDate.toISOString();
+  return utcDate;
+}
 
-export const handleSubmit = async (selectedVMs, dateRange, setEnergyData) => {
+
+export const handleSubmit = async (servers, selectedVMs, dateRange, setEnergyData) => {
   // Vérifier si les champs dateRange sont bien définis
   if (!dateRange.start || !dateRange.end) {
     console.error('Date range is not fully defined');
   }
-
+  dateRange.start = convertToUTC(dateRange.start)
+  dateRange.end = convertToUTC(dateRange.end)
+  var serv = Object()
   try {
-    const response = await fetchEnergyConsumption(selectedVMs, dateRange);
+    Object.keys(servers).forEach(server => {
+      if (selectedVMs[server] === undefined){
+        serv[server] = []
+      }else{
+        serv[server] = selectedVMs[server]
+      }
+    })
+   
+    const response = await fetchEnergyConsumption(serv, dateRange);
     if (response.ok) {
       const result = await response.json();
       console.log('Energy consumption data:', result);
@@ -52,6 +71,7 @@ export const handleSubmit = async (selectedVMs, dateRange, setEnergyData) => {
     } else {
       console.error('Error fetching energy consumption data');
     }
+    
   } catch (error) {
     console.error('Error submitting data:', error);
   }

@@ -51,10 +51,9 @@ def get_vms():
     return jsonify(result)
 
 
-# Endpoint pour obtenir la consommation d'énergie journalière
+# Endpoint pour obtenir la consommation d'énergie
 @app.route('/energy', methods=['POST'])
 def get_daily_energy():
-    print("Hello")
     try:
         request_data = request.json
 

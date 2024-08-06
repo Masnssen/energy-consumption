@@ -89,6 +89,29 @@ import sys, os
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'model')))
 import tsd_cpu, tsd_consumption
+import re
+
+
+
+ISO_8601_REGEX = (
+    r'^(\d{4}-\d{2}-\d{2})'  # Date : YYYY-MM-DD
+    r'(T(\d{2}:\d{2}:\d{2})(\.\d{3}?))'  # Heure : THH:MM:SS:UUU
+    r'(Z)$'  # Optionnel : Z pour UTC
+)
+
+def is_iso_8601(date_string):
+    return re.match(ISO_8601_REGEX, date_string) is not None
+
+def validate_dates(start_date, end_date):
+    
+    if not is_iso_8601(start_date):
+        print("Hello erro")
+        return False
+        
+    if not is_iso_8601(end_date):
+        return False
+
+    return True
 
 def getServerCpu(serverIp, dateS, dateF):
     token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
@@ -99,7 +122,6 @@ def getServerCpu(serverIp, dateS, dateF):
     try:
         module_tsd_cpu = tsd_cpu.TimeSeriesDatabase_Cpu(serverIp, org, url, token)
         results = module_tsd_cpu.getCpuData(dateS, dateF)
-        
         formated_result = dict()
         for server in results:
             server_ip = server["server_ip"]
@@ -114,6 +136,7 @@ def getServerCpu(serverIp, dateS, dateF):
         return formated_result
     except Exception as e:
         print("Error : ", e)
+        return False
 
 def getServer_consumption(serverIp, dateS, dateF):
     token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
@@ -122,13 +145,19 @@ def getServer_consumption(serverIp, dateS, dateF):
     ipAdresse = "20.20.20.20"
 
     try:
+        print(serverIp)
         module_tsd_consumption = tsd_consumption.TimeSeriesDatabase_Consumption(serverIp, org, url, token)
 
         consumption = module_tsd_consumption.manageConsumptionData(dateS, dateF)
         print(consumption)
-        return consumption[serverIp]        
+        if(serverIp in consumption):
+            return consumption[serverIp] 
+        
+        return False
+               
     except Exception as e:
         print("Error: ", e)
+        return False
 
 def getVms_consumption(server_consumption, vms_cpu, vms):
     vms_consumption = 0
@@ -142,35 +171,51 @@ def getVms_consumption(server_consumption, vms_cpu, vms):
     return vms_consumption
 
 def manageCpu_consumption(serverIp, vms, dateS, dateF):
-    
-    dateS = datetime.fromisoformat(dateS).isoformat()+"Z"  
-    dateF = datetime.fromisoformat(dateF).isoformat()+"Z"  
-
     vms_cpu = getServerCpu(serverIp, dateS, dateF)
-    server_consumption = getServer_consumption(serverIp, dateS, dateF)
-    print("vms_cpu: ", vms_cpu[serverIp])
-    print("Server_consumption", server_consumption)
-    print("vms: ", vms)
-    consumption = getVms_consumption(server_consumption, vms_cpu[serverIp], vms)
+    if(vms_cpu != False):
+        server_consumption = getServer_consumption(serverIp, dateS, dateF)
+        
+        if(server_consumption == False):
+            return False
+        
+        if(serverIp in vms_cpu):
+            print("vms_cpu: ", vms_cpu[serverIp])
+            print("Server_consumption", server_consumption)
+            print("vms: ", vms)
+            consumption = getVms_consumption(server_consumption, vms_cpu[serverIp], vms)
+        else:
+            consumption = server_consumption
+            
+    else:
+        consumption = getServer_consumption(serverIp, dateS, dateF)
+        if(consumption == False):
+            return False
 
     return consumption
 
 
 def manageEnergyConsumption(resources, dateS, dateF):
 
+    if(validate_dates(dateS, dateF) == False):
+        dateS = datetime.fromisoformat(dateS).isoformat()+"Z"  
+        dateF = datetime.fromisoformat(dateF).isoformat()+"Z"  
+
+        if(validate_dates(dateS, dateF) == False):
+            return 0
+        
     total_consumption = 0
     for server in resources:
         serverIp = server.split('_')[1]
         vms = resources[server]
-        consumption = manageCpu_consumption(serverIp, vms, dateS, dateF)
+        print(len(vms), vms)
+        if(len(vms) == 0):
+            consumption = getServer_consumption(serverIp, dateS, dateF)
+        else:
+            consumption = manageCpu_consumption(serverIp, vms, dateS, dateF)
+            if(consumption == False):
+                consumption = 0 
         print("Consumption: ", consumption)
         total_consumption += consumption
     print(total_consumption)
-    return total_consumption
-
-
-
-
-
-
+    return round(total_consumption, 3)
 

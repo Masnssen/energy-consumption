@@ -185,9 +185,10 @@ class TimeSeriesDatabase_Consumption:
             
     def manageConsumptionData(self, start_time, end_time):
         bucket = "energy_consumptions"
+        
         result = self.readData(start_time, end_time, bucket)
         consumptions = dict()
-    
+        
         for table in result:
             for record in table.records:
                 ip = record["ip"]
@@ -196,6 +197,7 @@ class TimeSeriesDatabase_Consumption:
                     consumptions[ip] += cons
                 else:
                     consumptions[ip] = cons
+        print("tsd: ", consumptions)
         return consumptions
 
     def readAllData(self, bucket):

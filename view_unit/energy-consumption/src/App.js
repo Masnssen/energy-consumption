@@ -21,6 +21,7 @@ const App = () => {
 
   const handleServerSelectWrapper = async (selected) => {
     await handleServerSelect(selected, servers, setSelectedServers, setVMs);
+    console.log(selectedServers)
   };
   
   const handleDateChange = (type, value) => {
@@ -31,19 +32,17 @@ const App = () => {
   const handleSubmitWrapper = async () => {
     // Perform validation
     const newErrors = {};
-    console.log(dateRange)
     if (!dateRange.start) newErrors.start = 'Start date and time are required';
     if (!dateRange.end) newErrors.end = 'End date and time are required';
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
+    }else{
+      setErrors([])
     }
-
     
-    await handleSubmit(selectedVMs, dateRange, setEnergyData);
-
+    await handleSubmit(vms, selectedVMs, dateRange, setEnergyData);
   };
-  
   
 
   return (
