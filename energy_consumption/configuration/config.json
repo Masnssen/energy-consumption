@@ -1,0 +1,19 @@
+{
+    "iot_unit": {
+        "ip": "192.168.0.3",
+        "plug_username": "tmasnssen@gmail.com",
+        "plug_password": "Massi@1408"
+    },
+    "cpu_usage": {
+        "vms": false
+    },
+    "tsdb": {
+        "url": "http://localhost:8086/api/v2/setup",
+        "ip": "10.10.10.0",
+        "org": "masnssen",
+        "bucket": "test_bucket",
+        "password": "massi",
+        "username": "massi",
+        "token": "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
+    }
+}
