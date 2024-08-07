@@ -1,0 +1,14 @@
+{
+    "10.10.10.0": {
+        "name": "server_1",
+        "org": "masnssen",
+        "url": "http://localhost:8086",
+        "token": "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
+    },
+    "20.20.20.0": {
+        "name": "server_2",
+        "org": "masnssen",
+        "url": "http://localhost:8086",
+        "token": "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
+    }
+}

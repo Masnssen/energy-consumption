@@ -160,19 +160,23 @@ class TimeSeriesDatabase_Consumption:
             print("Error")
 
     def readData(self, start_time, end_time, bucket):
-        bucket = bucket
+        try:
+            bucket = bucket
 
-        field = "_value"
-        query = f'from(bucket: "{bucket}") \
-            |> range(start: {start_time}, stop: {end_time}) \
-            |> group(columns: ["_measurement", "ip"]) \
-            |> sum(column: "{field}")'
+            field = "_value"
+            query = f'from(bucket: "{bucket}") \
+                |> range(start: {start_time}, stop: {end_time}) \
+                |> group(columns: ["_measurement", "ip"]) \
+                |> sum(column: "{field}")'
 
-        client = influxdb_client.InfluxDBClient(url=self.url, token=self.token, org=self.org)
-        result = client.query_api().query(query=query)
-        client.close()
-        # Affichage des résultats
-        return result
+            client = influxdb_client.InfluxDBClient(url=self.url, token=self.token, org=self.org)
+            result = client.query_api().query(query=query)
+            client.close()
+            # Affichage des résultats
+            return result
+        except Exception as e:
+            print("Error en readData")
+            return False
 
     def readAllData(self, bucket):
        

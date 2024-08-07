@@ -89,17 +89,34 @@ import sys, os
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'model')))
 import tsd_cpu, tsd_consumption
-import re
+import re, json
 
+def readParams(fileName):
+    try:
+        tsdb_params = dict()
+        with open(fileName, "r") as file:
+            data = json.load(file)
+            for elm in data:
+                tsdb = data[elm]
+                token = tsdb["token"]
+                org = tsdb["org"]   
+                url = tsdb["url"]
 
-
-ISO_8601_REGEX = (
-    r'^(\d{4}-\d{2}-\d{2})'  # Date : YYYY-MM-DD
-    r'(T(\d{2}:\d{2}:\d{2})(\.\d{3}?))'  # Heure : THH:MM:SS:UUU
-    r'(Z)$'  # Optionnel : Z pour UTC
-)
+        return data
+        
+    except Exception as e:
+        print("Error reading configuration file.")
+        print("Check the config file format")
+        print(e)
+        return False
 
 def is_iso_8601(date_string):
+    ISO_8601_REGEX = (
+        r'^(\d{4}-\d{2}-\d{2})'  # Date : YYYY-MM-DD
+        r'(T(\d{2}:\d{2}:\d{2})(\.\d{3}?))'  # Heure : THH:MM:SS:UUU
+        r'(Z)$'  # Optionnel : Z pour UTC
+    )
+
     return re.match(ISO_8601_REGEX, date_string) is not None
 
 def validate_dates(start_date, end_date):
@@ -113,11 +130,15 @@ def validate_dates(start_date, end_date):
 
     return True
 
-def getServerCpu(serverIp, dateS, dateF):
-    token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
-    org = "masnssen"
-    url = "http://localhost:8086"
-    ipAdresse = "10.10.10.0"
+def getServerCpu(serverIp, dateS, dateF, params):
+    try:
+        token = params[serverIp]["token"]
+        url = params[serverIp]["url"]
+        org = params[serverIp]["org"]
+    except Exception as e:
+        print("Error cannot found server params")
+        print("Check config file")
+        return False
 
     try:
         module_tsd_cpu = tsd_cpu.TimeSeriesDatabase_Cpu(serverIp, org, url, token)
@@ -138,18 +159,22 @@ def getServerCpu(serverIp, dateS, dateF):
         print("Error : ", e)
         return False
 
-def getServer_consumption(serverIp, dateS, dateF):
-    token = "btmlphqXfMo7R43O4R9J5Xsdnfx570GdHoXCVcA8vZywrm_2UtHT1BADvN30_tfHCumgeZVQd5F3msgo3UKN9w=="
-    org = "masnssen"
-    url = "http://localhost:8086"
-    ipAdresse = "20.20.20.20"
+def getServer_consumption(serverIp, dateS, dateF, params):
+    try:
+        token = params[serverIp]["token"]
+        url = params[serverIp]["url"]
+        org = params[serverIp]["org"]
+    except Exception as e:
+        print("Error cannot found server params")
+        print("Check config file")
+        return False
 
     try:
-        print(serverIp)
+        
         module_tsd_consumption = tsd_consumption.TimeSeriesDatabase_Consumption(serverIp, org, url, token)
 
         consumption = module_tsd_consumption.manageConsumptionData(dateS, dateF)
-        print(consumption)
+        
         if(serverIp in consumption):
             return consumption[serverIp] 
         
@@ -170,10 +195,11 @@ def getVms_consumption(server_consumption, vms_cpu, vms):
     print("vms_consumption: ", vms_consumption)
     return vms_consumption
 
-def manageCpu_consumption(serverIp, vms, dateS, dateF):
-    vms_cpu = getServerCpu(serverIp, dateS, dateF)
+def manageCpu_consumption(serverIp, vms, dateS, dateF, params):
+
+    vms_cpu = getServerCpu(serverIp, dateS, dateF, params)
     if(vms_cpu != False):
-        server_consumption = getServer_consumption(serverIp, dateS, dateF)
+        server_consumption = getServer_consumption(serverIp, dateS, dateF, params)
         
         if(server_consumption == False):
             return False
@@ -184,10 +210,9 @@ def manageCpu_consumption(serverIp, vms, dateS, dateF):
             print("vms: ", vms)
             consumption = getVms_consumption(server_consumption, vms_cpu[serverIp], vms)
         else:
-            consumption = server_consumption
-            
+            consumption = server_consumption       
     else:
-        consumption = getServer_consumption(serverIp, dateS, dateF)
+        consumption = getServer_consumption(serverIp, dateS, dateF, params)
         if(consumption == False):
             return False
 
@@ -202,16 +227,17 @@ def manageEnergyConsumption(resources, dateS, dateF):
 
         if(validate_dates(dateS, dateF) == False):
             return 0
-        
+    print("Date dep ", dateS, "\ndate fin ", dateF)
+    params = readParams("../configuration/config.json")
     total_consumption = 0
     for server in resources:
         serverIp = server.split('_')[1]
         vms = resources[server]
         print(len(vms), vms)
         if(len(vms) == 0):
-            consumption = getServer_consumption(serverIp, dateS, dateF)
+            consumption = getServer_consumption(serverIp, dateS, dateF, params)
         else:
-            consumption = manageCpu_consumption(serverIp, vms, dateS, dateF)
+            consumption = manageCpu_consumption(serverIp, vms, dateS, dateF, params)
             if(consumption == False):
                 consumption = 0 
         print("Consumption: ", consumption)

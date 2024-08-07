@@ -1,6 +1,7 @@
 import json
 import threading
 import modules.manage_tsd_cpuEnergy as manage
+
 def readParams(fileName):
     try:
         with open(fileName, "r") as file:
@@ -29,7 +30,7 @@ def main():
     plug_ip, plug_username, plug_password, cpu_usage, tsdb = readParams("./configuration/config.json")
     if plug_ip != False:
         if(cpu_usage):
-            iot_thread = threading.Thread(target=manage.iot, args=(plug_username, plug_password, plug_ip))
+            iot_thread = threading.Thread(target=manage.iot, args=(plug_username, plug_password, plug_ip, tsdb))
             cpu_thread = threading.Thread(target=manage.cpu_tsd, args=(tsdb))
 
             iot_thread.start()
@@ -38,7 +39,7 @@ def main():
             iot_thread.join()
             cpu_thread.join()
         else:
-            manage.iot(plug_username, plug_password, plug_ip)
+            manage.iot(plug_username, plug_password, plug_ip, tsdb)
     else:
         print("Exit")
 

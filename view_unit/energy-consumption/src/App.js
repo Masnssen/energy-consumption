@@ -34,6 +34,10 @@ const App = () => {
     const newErrors = {};
     if (!dateRange.start) newErrors.start = 'Start date and time are required';
     if (!dateRange.end) newErrors.end = 'End date and time are required';
+    if(dateRange.end < dateRange.start){
+      newErrors.start = 'Start date > End date'
+      newErrors.end = 'End date < Start date'
+    }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
